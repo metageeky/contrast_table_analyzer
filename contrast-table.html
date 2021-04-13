@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Contrast Table Analyzer</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.min.js"></script> 
+	<style>
+		.swatch {
+			width: 100%;
+			height: 1rem;
+		}
+		#contrasts_table, #summary_table {
+			border-spacing: 0;
+			border-collapse: collapse;
+		}
+		th, td {
+			padding: 4px;
+			border: solid 2px #000;
+		}
+		#contrasts_table td, #contrasts_table th {
+			font-family: Lucida Console, "Courier New", Courier, monospace;
+			text-align: center;
+		}
+		#summary_table th[scope="row"] {
+			text-align: left;
+		}
+		#summary_table td {
+			font-family: Lucida Console, "Courier New", Courier, monospace;
+			text-align: center;
+		}
+		.number {
+			font-family: Lucida Console, "Courier New", Courier, monospace;
+			font-weight: 600;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<h1>Contrast Table Analyzer</h1>
+		<p>	This tool takes a collection of HEX colors and calcualtes the pairwise
+			color contrasts for each per WCAG 2.0. Some analysis is then presented
+			alonside a table of all the contrast ratios.
+		</p>
+
+		<h2>Enter Colors</h2>
+		<label>
+			<div>Enter HEX values for colors, one per line:</div>
+			<textarea id="colors" rows="5" cols="33">#</textarea>
+		</label>
+		<div>
+			<button id="calculate">Calculate Contrasts</button>
+		</div>
+		
+		<div id="results" style="display: none">
+			<h2>Results</h2>
+			<h3>Summary</h3>
+			<div id="summary">
+				<p>	Given <span class="number" id="color_count"></span> color(s), there are 
+					<span class="number" id="pair_count"></span> distinct pairs of colors to contrast.
+				</p>
+				
+			
+				<table id="summary_table">
+					<tr>
+						<td>&nbsp;</td>
+						<th scope="col">Count</th>
+						<th scope="col">Percentage</th>
+					<tr>
+					<tr id="row3">
+						<th scope="row">Contrasts &#8805; 3</th>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr id="row4_5">
+						<th scope="row">Contrasts &#8805; 4.5</th>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr id="row7">
+						<th scope="row">Contrasts &#8805; 7</th>
+						<td></td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+			
+			<h3>Ratio Table</h3>
+			<div id="table"></div>
+		</div>
+	</main>
+	
+
+	
+	<script>
+		window.onload = function() {
+			document.getElementById('calculate').addEventListener('click', function(e) {
+				// clear results
+				document.getElementById('results').style.display = "none"
+				// destroy table
+				if(document.getElementById('contrasts_table') !== null)
+					document.getElementById('contrasts_table').remove();
+				// make contrast table
+				makeContrastTable();
+				// make summary table
+				makeSummaryTable();	
+				// reveal
+				document.getElementById('results').style.display = "block"
+			});
+		}
+		
+		function makeSummaryTable() {
+			let summary = document.getElementById('summary_table');
+			let contrasts = document.getElementById('contrasts_table');
+			let n = contrasts.querySelectorAll('tr').length - 1;
+			let total = (n * n - n) / 2;
+			
+			document.getElementById('color_count').innerText = n;
+			document.getElementById('pair_count').innerText = total;
+			
+			if(n <= 1) {
+				// all zeros
+				for(e of summary.querySelectorAll('th[scope="row"] + td')) {e.innerText = '0'};
+				for(e of summary.querySelectorAll('th[scope="row"] + td + td')) {e.innerText = '100%'};
+			}
+			else {
+				// convert constrasts to an n by n array
+				let ratios = new Array(n);
+				for(let i=0; i<n; i++)
+					ratios[i] = new Array(n);
+				
+				let r = contrasts.querySelectorAll('td');
+				for(let i=1; i<r.length; i++) {
+					let x = Math.floor( (i - 1) / n );
+					let y = (i - 1) % n;
+					ratios[x][y] = parseFloat( r[i].innerText );
+				}
+				let sum3 = 0;
+				let sum4_5 = 0;
+				let sum7 =0;
+				for(let i=0; i<n-1; i++) {
+					for(let j=i+1; j<n; j++) {
+						let r = ratios[i][j];
+						if(r >= 3)
+							sum3 += 1;
+						if(r >= 4.5)
+							sum4_5 += 1;
+						if(r >= 7)
+							sum7 += 1;
+					}
+				}
+				let cells = summary.querySelectorAll('td');
+				cells[1].innerText = sum3;
+				cells[2].innerText = (100*sum3/total).toFixed(2) + '%';
+				cells[3].innerText = sum4_5;
+				cells[4].innerText = (100*sum4_5/total).toFixed(2) + '%';
+				cells[5].innerText = sum7;
+				cells[6].innerText = (100*sum7/total).toFixed(2) + '%';
+			}
+			
+		}
+		
+		function makeContrastTable() {
+			let table = document.createElement('TABLE');
+			table.id = 'contrasts_table';
+			// grab colors
+			let c = document.getElementById('colors').value.split('\n');
+			let colors = [];
+			for(t of c) {
+				if(t === undefined || t.trim() == 0)
+					continue;
+				if(tinycolor(t.trim()).isValid())
+					colors.push( tinycolor(t.trim()) );
+			}
+			
+			// make table header row
+			let tr = document.createElement('TR');
+			tr.appendChild( document.createElement('TD') );
+			for(c of colors) {
+				let th = document.createElement('TH');
+				th.setAttribute('scope','col');
+				let html = '<div class="text">#'+ c.toHex() + '</div>';
+				html += '<div class="swatch" style="background-color:#' + c.toHex() + '"></div>';
+				th.innerHTML = html;
+				tr.appendChild(th);
+			}
+			table.appendChild(tr);
+			
+			// Each row
+			for(c1 of colors) {
+				// row header
+				let tr = document.createElement('TR');
+				let th = document.createElement('TH');
+				th.setAttribute('scope','row');
+				let html = '<div class="text">#'+ c1.toHex() + '</div>';
+				html += '<div class="swatch" style="background-color:#' + c1.toHex() + '"></div>';
+				th.innerHTML = html;
+				tr.appendChild(th);
+				for(c2 of colors) {
+					let td = document.createElement('TD');
+					let contrastRatio = tinycolor.readability( c1, c2);
+					td.innerText = contrastRatio.toFixed(3);
+					tr.appendChild(td);
+				}
+				table.appendChild(tr);
+			}
+			document.getElementById('table').appendChild(table);
+		}
+	</script>
+</body>
+<html>
