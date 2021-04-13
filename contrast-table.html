@@ -166,7 +166,7 @@
 			let c = document.getElementById('colors').value.split('\n');
 			let colors = [];
 			for(t of c) {
-				if(t === undefined || t.trim() == 0)
+				if(t === undefined || t.trim().length == 0)
 					continue;
 				if(tinycolor(t.trim()).isValid())
 					colors.push( tinycolor(t.trim()) );
