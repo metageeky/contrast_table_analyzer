@@ -32,6 +32,16 @@
 			font-family: Lucida Console, "Courier New", Courier, monospace;
 			font-weight: 600;
 		}
+		.filtered {
+			color: transparent;
+			background-color: #e5e5e5;
+		}
+		textarea + button {
+			margin-top: 0.375rem;
+		}
+		select#filter {
+			margin-bottom: 0.375rem;
+		}
 	</style>
 </head>
 <body>
@@ -85,15 +95,24 @@
 			</div>
 			
 			<h3>Ratio Table</h3>
-			<div id="table"></div>
+			<div id="table">
+				<label>
+					Show:
+					<select id="filter">
+						<option value="0">All Ratios</option>
+						<option value="3">Meet AA Large Text</option>
+						<option value="4.5">Meet AA Normal Text</option>
+						<option value="4.5">Meet AAA Large Text</option>
+						<option value="7">Meet AAA Normal Text</option>
+					</select>
+				</label>
+			</div>
 		</div>
 	</main>
 	
-
-	
 	<script>
 		window.onload = function() {
-			document.getElementById('calculate').addEventListener('click', function(e) {
+			document.getElementById('calculate').addEventListener('click', function(event) {
 				// clear results
 				document.getElementById('results').style.display = "none"
 				// destroy table
@@ -104,9 +123,23 @@
 				// make summary table
 				makeSummaryTable();	
 				// reveal
-				document.getElementById('results').style.display = "block"
+				document.getElementById('results').style.display = "block";
+				document.getElementById('filter').value = 0; // resets
 			});
+			document.getElementById('filter').addEventListener('change', function(event) {
+				let threshold = parseFloat(event.target.value);
+				for(e of document.querySelectorAll('#contrasts_table td.ratio') ) {
+					if(parseFloat(e.innerText) < threshold) 
+						e.classList.add('filtered');
+					else
+						e.classList.remove('filtered');
+				}
+				
+			});
+			
 		}
+		
+		
 		
 		function makeSummaryTable() {
 			let summary = document.getElementById('summary_table');
@@ -197,6 +230,7 @@
 				tr.appendChild(th);
 				for(c2 of colors) {
 					let td = document.createElement('TD');
+					td.classList.add('ratio');
 					let contrastRatio = tinycolor.readability( c1, c2);
 					td.innerText = contrastRatio.toFixed(3);
 					tr.appendChild(td);
