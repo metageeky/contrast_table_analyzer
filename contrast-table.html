@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Contrast Table Analyzer</title>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.min.js"></script> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.min.js"></script>
 	<style>
 		.swatch {
 			width: 100%;
@@ -54,22 +54,22 @@
 
 		<h2>Enter Colors</h2>
 		<label>
-			<div>Enter HEX values for colors, one per line:</div>
+			<div>Enter Hex, RGB, HSL, or named values for colors (<a href="https://github.com/bgrins/TinyColor#accepted-string-input">more info on accepted color formats</a>), one per line:</div>
 			<textarea id="colors" rows="5" cols="33"></textarea>
 		</label>
 		<div>
 			<button id="calculate">Calculate Contrasts</button>
 		</div>
-		
+
 		<div id="results" style="display: none">
 			<h2>Results</h2>
 			<h3>Summary</h3>
 			<div id="summary">
-				<p>	Given <span class="number" id="color_count"></span> color(s), there are 
+				<p>	Given <span class="number" id="color_count"></span> color(s), there are
 					<span class="number" id="pair_count"></span> distinct pairs of colors to contrast.
 				</p>
-				
-			
+
+
 				<table id="summary_table">
 					<tr>
 						<td>&nbsp;</td>
@@ -93,7 +93,7 @@
 					</tr>
 				</table>
 			</div>
-			
+
 			<h3>Ratio Table</h3>
 			<div id="table">
 				<label>
@@ -109,7 +109,7 @@
 			</div>
 		</div>
 	</main>
-	
+
 	<script>
 		window.onload = function() {
 			document.getElementById('calculate').addEventListener('click', function(event) {
@@ -121,7 +121,7 @@
 				// make contrast table
 				makeContrastTable();
 				// make summary table
-				makeSummaryTable();	
+				makeSummaryTable();
 				// reveal
 				document.getElementById('results').style.display = "block";
 				document.getElementById('filter').value = 0; // resets
@@ -129,27 +129,27 @@
 			document.getElementById('filter').addEventListener('change', function(event) {
 				let threshold = parseFloat(event.target.value);
 				for(e of document.querySelectorAll('#contrasts_table td.ratio') ) {
-					if(parseFloat(e.innerText) < threshold) 
+					if(parseFloat(e.innerText) < threshold)
 						e.classList.add('filtered');
 					else
 						e.classList.remove('filtered');
 				}
-				
+
 			});
-			
+
 		}
-		
-		
-		
+
+
+
 		function makeSummaryTable() {
 			let summary = document.getElementById('summary_table');
 			let contrasts = document.getElementById('contrasts_table');
 			let n = contrasts.querySelectorAll('tr').length - 1;
 			let total = (n * n - n) / 2;
-			
+
 			document.getElementById('color_count').innerText = n;
 			document.getElementById('pair_count').innerText = total;
-			
+
 			if(n <= 1) {
 				// all zeros
 				for(e of summary.querySelectorAll('th[scope="row"] + td')) {e.innerText = '0'};
@@ -160,7 +160,7 @@
 				let ratios = new Array(n);
 				for(let i=0; i<n; i++)
 					ratios[i] = new Array(n);
-				
+
 				let r = contrasts.querySelectorAll('td');
 				for(let i=1; i<r.length; i++) {
 					let x = Math.floor( (i - 1) / n );
@@ -189,9 +189,9 @@
 				cells[5].innerText = sum7;
 				cells[6].innerText = (100*sum7/total).toFixed(2) + '%';
 			}
-			
+
 		}
-		
+
 		function makeContrastTable() {
 			let table = document.createElement('TABLE');
 			table.id = 'contrasts_table';
@@ -204,27 +204,27 @@
 				if(tinycolor(t.trim()).isValid())
 					colors.push( tinycolor(t.trim()) );
 			}
-			
+
 			// make table header row
 			let tr = document.createElement('TR');
 			tr.appendChild( document.createElement('TD') );
 			for(c of colors) {
 				let th = document.createElement('TH');
 				th.setAttribute('scope','col');
-				let html = '<div class="text">#'+ c.toHex() + '</div>';
+				let html = '<div class="text">'+ c + '</div>';
 				html += '<div class="swatch" style="background-color:#' + c.toHex() + '"></div>';
 				th.innerHTML = html;
 				tr.appendChild(th);
 			}
 			table.appendChild(tr);
-			
+
 			// Each row
 			for(c1 of colors) {
 				// row header
 				let tr = document.createElement('TR');
 				let th = document.createElement('TH');
 				th.setAttribute('scope','row');
-				let html = '<div class="text">#'+ c1.toHex() + '</div>';
+				let html = '<div class="text">'+ c1 + '</div>';
 				html += '<div class="swatch" style="background-color:#' + c1.toHex() + '"></div>';
 				th.innerHTML = html;
 				tr.appendChild(th);
